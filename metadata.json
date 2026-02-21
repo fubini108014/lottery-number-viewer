@@ -1,0 +1,5 @@
+{
+  "name": "Lottery Number Viewer",
+  "description": "A modern React application to view lottery numbers from CSV files with formatted dates and styled tables.",
+  "requestFramePermissions": []
+}
