@@ -13,6 +13,8 @@ interface ZoneTableProps {
   groupAZones: [Set<number>, Set<number>, Set<number>];
   groupBZones: [Set<number>, Set<number>, Set<number>];
   groupCZones: [Set<number>, Set<number>, Set<number>];
+  groupNewAZones: [Set<number>, Set<number>, Set<number>];
+  groupNewBZones: [Set<number>, Set<number>, Set<number>];
   initialTab?: string;
   onTabChange?: (tab: string) => void;
 }
@@ -23,6 +25,8 @@ export const ZoneTable: React.FC<ZoneTableProps> = ({
   groupAZones, 
   groupBZones, 
   groupCZones,
+  groupNewAZones,
+  groupNewBZones,
   initialTab = 'A組',
   onTabChange
 }) => {
@@ -44,6 +48,8 @@ export const ZoneTable: React.FC<ZoneTableProps> = ({
     { name: 'A組', zones: groupAZones },
     { name: 'B組', zones: groupBZones },
     { name: 'C組', zones: groupCZones },
+    { name: '新A', zones: groupNewAZones },
+    { name: '新B', zones: groupNewBZones },
   ];
 
   const activeGroup = groups.find(g => g.name === activeTab) || groups[0];
