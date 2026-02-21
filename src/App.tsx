@@ -22,7 +22,7 @@ export default function App() {
     const fetchFiles = async () => {
       try {
         // Fetch from static JSON file generated at build time
-        const response = await fetch('/files.json');
+        const response = await fetch(`${import.meta.env.BASE_URL}files.json`);
         if (response.ok) {
           const data = await response.json();
           setFiles(data);
@@ -43,7 +43,7 @@ export default function App() {
     setLoading(true);
     try {
       // Fetch JSON file directly from public/data directory
-      const response = await fetch(`/data/${filename}`);
+      const response = await fetch(`${import.meta.env.BASE_URL}data/${filename}`);
       if (response.ok) {
         const jsonData = await response.json();
         
