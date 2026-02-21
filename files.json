@@ -6,5 +6,17 @@
   {
     "name": "lottery_2025.json",
     "year": "2025"
+  },
+  {
+    "name": "lottery_2024.json",
+    "year": "2024"
+  },
+  {
+    "name": "lottery_2023.json",
+    "year": "2023"
+  },
+  {
+    "name": "lottery_2022.json",
+    "year": "2022"
   }
 ]
