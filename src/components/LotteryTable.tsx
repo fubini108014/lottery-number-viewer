@@ -62,18 +62,7 @@ const calculateGroup = (numbers: number[], zones: [Set<number>, Set<number>, Set
 const GroupResultCell: React.FC<{ result: string, pattern: string }> = ({ result, pattern }) => (
   <td className="py-2 px-6 text-center align-middle">
     <div className="flex flex-col items-center justify-center gap-0.5">
-      {result ? (
-        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-bold shadow-sm ${
-          result === '大' 
-            ? 'bg-rose-100 text-rose-600 border border-rose-200' 
-            : 'bg-emerald-100 text-emerald-600 border border-emerald-200'
-        }`}>
-          {result}
-        </span>
-      ) : (
-        <div className="w-7 h-7" /> 
-      )}
-      <span className="text-[10px] font-mono text-zinc-500 font-semibold">
+      <span className={`text-[12px] font-mono whitespace-nowrap font-semibold ${result === '大'?'px-1.5 py-0 rounded bg-rose-100 text-rose-600 border border-rose-200':result === '小'?'px-1.5 py-0 rounded bg-emerald-100 text-emerald-600 border border-emerald-200':'text-zinc-500'}`}>
         {pattern}
       </span>
     </div>
