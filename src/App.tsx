@@ -202,6 +202,7 @@ export default function App() {
                 year={year} 
                 showZoneTable={showZoneTable}
                 onToggleZoneTable={() => setShowZoneTable(!showZoneTable)}
+                user={user}
               />
             )
           )}

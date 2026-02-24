@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,6 +14,7 @@ const firebaseConfig = {
 // Initialize Firebase
 let auth: any;
 let googleProvider: any;
+let db: any;
 
 const isFirebaseConfigValid = firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY";
 
@@ -20,6 +22,7 @@ if (isFirebaseConfigValid) {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
+  db = getFirestore(app);
 } else {
   console.warn("Firebase Config is missing or invalid. Please check your .env file.");
 }
@@ -64,5 +67,5 @@ export const logout = async () => {
   }
 };
 
-export { auth };
+export { auth, db };
 export type { User };

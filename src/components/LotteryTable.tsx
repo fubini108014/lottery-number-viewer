@@ -1,14 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { LotteryDraw } from '../types';
 import { Calendar, Hash, Info } from 'lucide-react';
 import { ZoneTable } from './ZoneTable';
+import { db, User } from '../firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 interface LotteryTableProps {
   data: LotteryDraw[];
   year: string | null;
   showZoneTable: boolean;
   onToggleZoneTable: () => void;
+  user: User | null;
 }
 
 const GROUPS_CONFIG = [
@@ -41,36 +44,75 @@ const GROUPS_CONFIG = [
 
 const calculateGroup = (numbers: number[], zones: [Set<number>, Set<number>, Set<number>]): { result: string, pattern: string } => {
   let counts = [0, 0, 0];
-
   for (const num of numbers) {
     if (zones[0].has(num)) counts[0]++;
     else if (zones[1].has(num)) counts[1]++;
     else if (zones[2].has(num)) counts[2]++;
   }
-
   const pattern = counts.join('-');
   let result = '';
-
-  if (['1-2-2', '2-1-2', '2-2-1'].includes(pattern)) {
-    result = '大';
-  } else if (['1-1-3', '1-3-1', '3-1-1'].includes(pattern)) {
-    result = '小';
-  }
+  if (['1-2-2', '2-1-2', '2-2-1'].includes(pattern)) result = '大';
+  else if (['1-1-3', '1-3-1', '3-1-1'].includes(pattern)) result = '小';
   return { result, pattern };
 };
 
-const GroupResultCell: React.FC<{ result: string, pattern: string }> = ({ result, pattern }) => (
-  <td className="py-2 px-6 text-center align-middle">
-    <div className="flex flex-col items-center justify-center gap-0.5">
-      <span className={`text-[12px] font-mono whitespace-nowrap font-semibold ${result === '大'?'px-1.5 py-0 rounded bg-rose-200 text-rose-800 border border-rose-300':result === '小'?'px-1.5 py-0 rounded bg-emerald-200 text-emerald-800 border border-emerald-300':'text-zinc-500'}`}>
+const GroupResultCell: React.FC<{ 
+  result: string, 
+  pattern: string, 
+  value: string, 
+  onChange: (val: string) => void 
+}> = ({ result, pattern, value, onChange }) => (
+  <td className="py-1.5 px-4 text-center align-middle border-x border-zinc-50/50">
+    <div className="flex flex-row items-center justify-center gap-2">
+      <span className={`text-[11px] font-mono whitespace-nowrap font-bold min-w-[38px] ${result === '大'?'px-1 py-0 rounded bg-rose-200 text-rose-800 border border-rose-300':result === '小'?'px-1 py-0 rounded bg-emerald-200 text-emerald-800 border border-emerald-300':'text-zinc-500'}`}>
         {pattern}
       </span>
+      <input
+        type="text"
+        inputMode="numeric"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-10 h-6 text-center text-[12px] font-bold border border-zinc-200 rounded-md bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:bg-white transition-all font-mono placeholder:text-zinc-300"
+        placeholder="-"
+      />
     </div>
   </td>
 );
 
-export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZoneTable, onToggleZoneTable }) => {
+export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZoneTable, onToggleZoneTable, user }) => {
   const [initialZoneTab, setInitialZoneTab] = useState<string>('A組');
+  const [userNotes, setUserNotes] = useState<Record<string, string>>({});
+
+  // 從 Firestore 即時獲取資料
+  useEffect(() => {
+    if (!user || !db) return;
+
+    const docRef = doc(db, 'userNotes', user.uid);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setUserNotes(docSnap.data() as Record<string, string>);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleNoteChange = async (dateKey: string, groupId: string, val: string) => {
+    if (!user || !db) return;
+
+    // 先更新本地 UI (樂觀更新)
+    const noteKey = `${dateKey}-${groupId}`;
+    const newNotes = { ...userNotes, [noteKey]: val };
+    setUserNotes(newNotes);
+
+    // 儲存到雲端
+    try {
+      const docRef = doc(db, 'userNotes', user.uid);
+      await setDoc(docRef, newNotes, { merge: true });
+    } catch (error) {
+      console.error("Firestore Save Error:", error);
+    }
+  };
 
   const zoneTableProps = useMemo(() => ({
     groupAZones: GROUPS_CONFIG[0].zones,
@@ -87,9 +129,7 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
       onToggleZoneTable(); 
     } else {
       setInitialZoneTab(tab);
-      if (!showZoneTable) {
-        onToggleZoneTable();
-      }
+      if (!showZoneTable) onToggleZoneTable();
     }
   };
 
@@ -101,7 +141,6 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
     });
     const day = date.getDay();
     const weekdayStr = date.toLocaleDateString('zh-TW', { weekday: 'short' }).replace('週', '');
-    
     const weekdayStyles = 
       day === 0 ? 'bg-rose-100 text-rose-600 border-rose-200' :
       day === 6 ? 'bg-indigo-100 text-indigo-600 border-indigo-200' :
@@ -109,9 +148,7 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
 
     return (
       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-        {/* Desktop: Full year (2026/02/21) */}
         <span className="font-mono text-zinc-700 font-medium text-sm hidden sm:inline">{dateStr}</span>
-        {/* Mobile: Short year (26/02/21) */}
         <span className="font-mono text-zinc-700 font-medium text-sm inline sm:hidden">{dateStr.slice(2)}</span>
         <span className={`text-[12px] font-bold px-1.5 py-0 rounded border w-fit min-w-[20px] text-center ${weekdayStyles}`}>
           {weekdayStr}
@@ -162,28 +199,21 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-zinc-900 border-b border-zinc-700 sticky top-0 z-20 shadow-md">
-                  <th className="py-4 px-6 text-xs font-bold text-zinc-100 uppercase tracking-widest w-[140px] whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-violet-400" />
-                      開獎日期
-                    </div>
+                  <th className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest w-[120px] whitespace-nowrap">
+                    <div className="flex items-center gap-2"><Calendar className="w-3 h-3 text-violet-400" />開獎日期</div>
                   </th>
-                  <th className="py-4 px-6 text-xs font-bold text-zinc-100 uppercase tracking-widest whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Hash className="w-3.5 h-3.5 text-violet-400" />
-                      中獎號碼
-                    </div>
+                  <th className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest whitespace-nowrap">
+                    <div className="flex items-center gap-2"><Hash className="w-3 h-3 text-violet-400" />中獎號碼</div>
                   </th>
                   {GROUPS_CONFIG.map(group => (
-                    <th key={group.id} className="py-4 px-6 text-xs font-bold text-zinc-100 uppercase tracking-widest w-[90px] text-center whitespace-nowrap">
+                    <th key={group.id} className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest w-[130px] text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1">
                         {group.name}
                         <button 
                           onClick={() => handleOpenZoneTable(group.id)}
-                          className={`p-1 rounded-full transition-colors ${showZoneTable && initialZoneTab === group.id ? 'bg-violet-500 text-white' : 'hover:bg-zinc-800 text-zinc-400 hover:text-violet-400'}`}
-                          title={showZoneTable ? "隱藏分組對照表" : "查看分組對照表"}
+                          className={`p-0.5 rounded-full transition-colors ${showZoneTable && initialZoneTab === group.id ? 'bg-violet-500 text-white' : 'hover:bg-zinc-800 text-zinc-400 hover:text-violet-400'}`}
                         >
-                          <Info className="w-3 h-3" />
+                          <Info className="w-2.5 h-2.5" />
                         </button>
                       </div>
                     </th>
@@ -196,18 +226,24 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
                     key={index}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.01 }}
+                    transition={{ delay: index * 0.005 }}
                     className="group hover:bg-violet-50/30 transition-colors"
                   >
-                    <td className="py-2 px-6 text-sm">
-                      {formatDate(row.date)}
-                    </td>
-                    <td className="py-2 px-6">
-                      {formatNumbers(row.numbers, row.date)}
-                    </td>
+                    <td className="py-1.5 px-4 text-sm">{formatDate(row.date)}</td>
+                    <td className="py-1.5 px-4">{formatNumbers(row.numbers, row.date)}</td>
                     {GROUPS_CONFIG.map(group => {
                       const { result, pattern } = calculateGroup(row.numbers, group.zones);
-                      return <GroupResultCell key={group.id} result={result} pattern={pattern} />;
+                      const dateKey = row.date.toISOString();
+                      const noteKey = `${dateKey}-${group.id}`;
+                      return (
+                        <GroupResultCell 
+                          key={group.id} 
+                          result={result} 
+                          pattern={pattern} 
+                          value={userNotes[noteKey] || ''}
+                          onChange={(val) => handleNoteChange(dateKey, group.id, val)}
+                        />
+                      );
                     })}
                   </motion.tr>
                 ))}
