@@ -113,26 +113,42 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
         <span className="font-mono text-zinc-700 font-medium text-sm hidden sm:inline">{dateStr}</span>
         {/* Mobile: Short year (26/02/21) */}
         <span className="font-mono text-zinc-700 font-medium text-sm inline sm:hidden">{dateStr.slice(2)}</span>
-        <span className={`text-[10px] font-bold px-1.5 py-0 rounded border w-fit min-w-[20px] text-center ${weekdayStyles}`}>
+        <span className={`text-[12px] font-bold px-1.5 py-0 rounded border w-fit min-w-[20px] text-center ${weekdayStyles}`}>
           {weekdayStr}
         </span>
       </div>
     );
   };
 
-  const formatNumbers = (numbers: number[]) => (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {numbers.map((num, idx) => (
-        <div key={idx} className="relative group">
-          <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-zinc-200 shadow-sm group-hover:border-violet-300 group-hover:shadow-md group-hover:shadow-violet-100 transition-all duration-200">
-            <span className="font-mono font-bold text-base text-zinc-800 group-hover:text-violet-600 transition-colors">
-              {num}
-            </span>
+  const formatNumbers = (numbers: number[], date: Date) => {
+    const day = date.getDay();
+    const isSunday = day === 0;
+    const isSaturday = day === 6;
+
+    const ballStyles = 
+      isSunday ? 'bg-rose-50 border-rose-200 text-rose-700 shadow-rose-100 group-hover:border-rose-400 group-hover:shadow-rose-200' :
+      isSaturday ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-indigo-100 group-hover:border-indigo-400 group-hover:shadow-indigo-200' :
+      'bg-white border-zinc-200 text-zinc-800 shadow-zinc-100 group-hover:border-violet-300 group-hover:shadow-violet-100';
+
+    const textStyles = 
+      isSunday ? 'text-rose-700 group-hover:text-rose-800' :
+      isSaturday ? 'text-indigo-700 group-hover:text-indigo-800' :
+      'text-zinc-800 group-hover:text-violet-600';
+
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {numbers.map((num, idx) => (
+          <div key={idx} className="relative group">
+            <div className={`w-7 h-7 flex items-center justify-center rounded-lg border shadow-sm transition-all duration-200 ${ballStyles}`}>
+              <span className={`font-mono font-bold text-base transition-colors ${textStyles}`}>
+                {num}
+              </span>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="relative w-full h-full flex overflow-hidden">
@@ -187,7 +203,7 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
                       {formatDate(row.date)}
                     </td>
                     <td className="py-2 px-6">
-                      {formatNumbers(row.numbers)}
+                      {formatNumbers(row.numbers, row.date)}
                     </td>
                     {GROUPS_CONFIG.map(group => {
                       const { result, pattern } = calculateGroup(row.numbers, group.zones);
