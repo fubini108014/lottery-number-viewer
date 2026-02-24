@@ -62,8 +62,8 @@ const GroupResultCell: React.FC<{
   value: string, 
   onChange: (val: string) => void 
 }> = ({ result, pattern, value, onChange }) => (
-  <td className="py-1.5 px-4 text-center align-middle border-x border-zinc-50/50">
-    <div className="flex flex-row items-center justify-center gap-2">
+  <td className="py-1.5 px-2 text-center align-middle border-x border-zinc-50/50">
+    <div className="flex flex-row items-center justify-center gap-1">
       <span className={`text-[11px] font-mono whitespace-nowrap font-bold min-w-[38px] ${result === '大'?'px-1 py-0 rounded bg-rose-200 text-rose-800 border border-rose-300':result === '小'?'px-1 py-0 rounded bg-emerald-200 text-emerald-800 border border-emerald-300':'text-zinc-500'}`}>
         {pattern}
       </span>
@@ -173,7 +173,7 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
       'text-zinc-800 group-hover:text-violet-600';
 
     return (
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap">
         {numbers.map((num, idx) => (
           <div key={idx} className="relative group">
             <div className={`w-7 h-7 flex items-center justify-center rounded-lg border shadow-sm transition-all duration-200 ${ballStyles}`}>
