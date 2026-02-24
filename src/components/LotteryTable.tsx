@@ -62,7 +62,7 @@ const calculateGroup = (numbers: number[], zones: [Set<number>, Set<number>, Set
 const GroupResultCell: React.FC<{ result: string, pattern: string }> = ({ result, pattern }) => (
   <td className="py-2 px-6 text-center align-middle">
     <div className="flex flex-col items-center justify-center gap-0.5">
-      <span className={`text-[12px] font-mono whitespace-nowrap font-semibold ${result === '大'?'px-1.5 py-0 rounded bg-rose-100 text-rose-600 border border-rose-200':result === '小'?'px-1.5 py-0 rounded bg-emerald-100 text-emerald-600 border border-emerald-200':'text-zinc-500'}`}>
+      <span className={`text-[12px] font-mono whitespace-nowrap font-semibold ${result === '大'?'px-1.5 py-0 rounded bg-rose-200 text-rose-800 border border-rose-300':result === '小'?'px-1.5 py-0 rounded bg-emerald-200 text-emerald-800 border border-emerald-300':'text-zinc-500'}`}>
         {pattern}
       </span>
     </div>
@@ -99,15 +99,21 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
       month: '2-digit',
       day: '2-digit',
     });
+    const day = date.getDay();
     const weekdayStr = date.toLocaleDateString('zh-TW', { weekday: 'short' }).replace('週', '');
     
+    const weekdayStyles = 
+      day === 0 ? 'bg-rose-100 text-rose-600 border-rose-200' :
+      day === 6 ? 'bg-indigo-100 text-indigo-600 border-indigo-200' :
+      'bg-zinc-100 text-zinc-600 border-zinc-200';
+
     return (
       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
         {/* Desktop: Full year (2026/02/21) */}
         <span className="font-mono text-zinc-700 font-medium text-sm hidden sm:inline">{dateStr}</span>
         {/* Mobile: Short year (26/02/21) */}
         <span className="font-mono text-zinc-700 font-medium text-sm inline sm:hidden">{dateStr.slice(2)}</span>
-        <span className="text-[10px] font-bold px-1.5 py-0 rounded bg-zinc-100 text-zinc-600 border border-zinc-200 w-fit min-w-[20px] text-center">
+        <span className={`text-[10px] font-bold px-1.5 py-0 rounded border w-fit min-w-[20px] text-center ${weekdayStyles}`}>
           {weekdayStr}
         </span>
       </div>

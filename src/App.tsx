@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { LotteryTable } from './components/LotteryTable';
 import { FileSelector } from './components/FileSelector';
-import { Sparkles, Info } from 'lucide-react';
+import { LoginPage } from './components/LoginPage';
+import { Sparkles, LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
 import { LotteryDraw } from './types';
 import { motion } from 'motion/react';
+import { auth, loginWithGoogle, logout, User, isWhitelisted } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 interface FileInfo {
   name: string;
@@ -17,8 +20,31 @@ export default function App() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showZoneTable, setShowZoneTable] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        if (isWhitelisted(currentUser.email)) {
+          setUser(currentUser);
+          setAuthError(null);
+        } else {
+          await signOut(auth);
+          setUser(null);
+          setAuthError("此 Google 帳號不在允許的訪問名單內。");
+        }
+      } else {
+        setUser(null);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return; // Only fetch files if logged in
     const fetchFiles = async () => {
       try {
         // Fetch from static JSON file generated at build time
@@ -36,7 +62,7 @@ export default function App() {
     };
 
     fetchFiles();
-  }, []);
+  }, [user]); // Add user to dependencies
 
   const handleFileSelect = async (filename: string) => {
     setSelectedFile(filename);
@@ -67,6 +93,18 @@ export default function App() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="h-screen bg-zinc-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage error={authError} />;
+  }
+
   return (
     <div className="h-screen bg-zinc-50 text-zinc-900 font-sans selection:bg-violet-100 selection:text-violet-900 flex flex-col overflow-hidden">
       {/* Abstract Background Decoration */}
@@ -87,7 +125,7 @@ export default function App() {
             </div>
             <div className="text-left">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
-                今彩539 <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600">分析</span>
+                數據矩陣 <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600">分析</span>
               </h1>
               <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
                 {year && (
@@ -102,13 +140,51 @@ export default function App() {
             </div>
           </div>
 
-          <div className="w-full md:w-auto min-w-[240px] flex items-center gap-3">
+          <div className="w-full md:w-auto min-w-[260px] flex items-center gap-3">
             {files.length > 0 && (
               <FileSelector 
                 files={files} 
                 selectedFile={selectedFile} 
                 onSelect={handleFileSelect} 
               />
+            )}
+            
+            {user ? (
+              <div className="flex items-center min-w-[93px] bg-white/80 backdrop-blur-md p-1 pr-1.5 rounded-2xl shadow-sm ring-1 ring-black/5 transition-all hover:shadow-md hover:ring-black/10 h-11">
+                <div className="relative shrink-0 flex items-center justify-center p-1">
+                  {user.photoURL ? (
+                    <img 
+                      src={user.photoURL} 
+                      alt={user.displayName || 'User'} 
+                      className="w-8 h-8 rounded-xl object-cover ring-2 ring-violet-100 shadow-sm"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center">
+                      <UserIcon className="w-5 h-5 text-violet-600" />
+                    </div>
+                  )}
+                  <div className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></div>
+                </div>
+                
+                <div className="w-px h-4 bg-zinc-200 mx-1"></div>
+                
+                <button 
+                  onClick={() => logout()}
+                  className="group p-2 hover:bg-rose-50 text-zinc-400 hover:text-rose-600 rounded-xl transition-all duration-200 shrink-0 flex items-center justify-center"
+                  title={`登出 (${user.displayName})`}
+                >
+                  <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => loginWithGoogle()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-100 transition-all font-medium"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Google 登入</span>
+              </button>
             )}
           </div>
         </motion.header>
@@ -132,7 +208,7 @@ export default function App() {
         </main>
 
         <footer className="flex-none mt-4 text-center text-zinc-400 text-[10px] py-2">
-          <p>© {new Date().getFullYear()} 今彩539分析。為數據愛好者打造。</p>
+          <p>© {new Date().getFullYear()} 數據矩陣分析。為數據愛好者打造。</p>
         </footer>
       </div>
     </div>
