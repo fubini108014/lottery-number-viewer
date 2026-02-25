@@ -64,7 +64,7 @@ const GroupResultCell: React.FC<{
 }> = ({ result, pattern, value, onChange }) => (
   <td className="py-1.5 px-2 text-center align-middle border-x border-zinc-50/50">
     <div className="flex flex-row items-center justify-center gap-1">
-      <span className={`text-[11px] font-mono whitespace-nowrap font-bold min-w-[38px] ${result === '大'?'px-1 py-0 rounded bg-rose-200 text-rose-800 border border-rose-300':result === '小'?'px-1 py-0 rounded bg-emerald-200 text-emerald-800 border border-emerald-300':'text-zinc-500'}`}>
+      <span className={`text-[11px] font-mono whitespace-nowrap font-bold min-w-[38px] ${result === '大'?'px-1 py-0 rounded bg-rose-200 text-rose-800 border border-rose-300':result === '小'?'px-1 py-0 rounded bg-emerald-200 text-emerald-800 border border-emerald-300':''}`}>
         {pattern}
       </span>
       <input
@@ -72,7 +72,7 @@ const GroupResultCell: React.FC<{
         inputMode="numeric"
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
-        className="w-10 h-6 text-center text-[12px] font-bold border border-zinc-200 rounded-md bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:bg-white transition-all font-mono placeholder:text-zinc-300"
+        className="w-10 h-6 text-center text-[12px] border border-zinc-200 rounded-md bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:bg-white transition-all font-mono placeholder:text-zinc-300"
         placeholder="-"
       />
     </div>
@@ -147,10 +147,10 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
       'bg-zinc-100 text-zinc-600 border-zinc-200';
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+      <div className="flex flex-row items-center gap-2 whitespace-nowrap">
         <span className="font-mono text-zinc-700 font-medium text-sm hidden sm:inline">{dateStr}</span>
         <span className="font-mono text-zinc-700 font-medium text-sm inline sm:hidden">{dateStr.slice(2)}</span>
-        <span className={`text-[12px] font-bold px-1.5 py-0 rounded border w-fit min-w-[20px] text-center ${weekdayStyles}`}>
+        <span className={`text-[12px] font-bold px-1.5 py-0 rounded border min-w-[20px] text-center ${weekdayStyles}`}>
           {weekdayStr}
         </span>
       </div>
@@ -196,17 +196,17 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
       >
         <div className="flex-1 bg-white rounded-3xl shadow-xl shadow-zinc-200/50 border border-white/50 overflow-hidden backdrop-blur-sm flex flex-col min-h-0">
           <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-left border-separate border-spacing-0 min-w-[800px]">
               <thead>
-                <tr className="bg-zinc-900 border-b border-zinc-700 sticky top-0 z-20 shadow-md">
-                  <th className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest w-[120px] whitespace-nowrap">
+                <tr className="bg-zinc-900 sticky top-0 z-20 shadow-md">
+                  <th className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest w-[140px] whitespace-nowrap sticky left-0 z-30 bg-zinc-900 border-b border-zinc-700">
                     <div className="flex items-center gap-2"><Calendar className="w-3 h-3 text-violet-400" />開獎日期</div>
                   </th>
-                  <th className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest whitespace-nowrap">
+                  <th className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest whitespace-nowrap border-b border-zinc-700">
                     <div className="flex items-center gap-2"><Hash className="w-3 h-3 text-violet-400" />中獎號碼</div>
                   </th>
                   {GROUPS_CONFIG.map(group => (
-                    <th key={group.id} className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest w-[130px] text-center whitespace-nowrap">
+                    <th key={group.id} className="py-2 px-4 text-[10px] font-bold text-zinc-100 uppercase tracking-widest w-[130px] text-center whitespace-nowrap border-b border-zinc-700">
                       <div className="flex items-center justify-center gap-1">
                         {group.name}
                         <button 
@@ -220,7 +220,7 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-50">
+              <tbody className="">
                 {data.map((row, index) => (
                   <motion.tr
                     key={index}
@@ -229,8 +229,8 @@ export const LotteryTable: React.FC<LotteryTableProps> = ({ data, year, showZone
                     transition={{ delay: index * 0.005 }}
                     className="group hover:bg-violet-50/30 transition-colors"
                   >
-                    <td className="py-1.5 px-4 text-sm">{formatDate(row.date)}</td>
-                    <td className="py-1.5 px-4">{formatNumbers(row.numbers, row.date)}</td>
+                    <td className="py-1.5 px-4 text-sm sticky left-0 z-10 bg-white group-hover:bg-[#fbfaff] transition-colors border-b border-zinc-50">{formatDate(row.date)}</td>
+                    <td className="py-1.5 px-4 border-b border-zinc-50">{formatNumbers(row.numbers, row.date)}</td>
                     {GROUPS_CONFIG.map(group => {
                       const { result, pattern } = calculateGroup(row.numbers, group.zones);
                       const dateKey = row.date.toISOString();

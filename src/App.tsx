@@ -113,7 +113,7 @@ export default function App() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-fuchsia-200/30 blur-3xl" />
       </div>
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col h-full">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-4 sm:px-5 lg:px-7 flex flex-col h-full">
         <motion.header 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
