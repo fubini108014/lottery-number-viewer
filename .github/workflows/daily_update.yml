@@ -7,7 +7,7 @@ on:
     # 台灣時間 20:46 執行 (UTC 12:46)
     - cron: '46 12 * * *'
     # 台灣時間 20:50 執行 (UTC 12:50)
-    - cron: '50 12 * * *'
+    - cron: '10 21 * * *'
   workflow_dispatch: # 讓你可以手動點擊執行測試
 
 jobs:
@@ -19,7 +19,6 @@ jobs:
       - name: 檢出程式碼
         uses: actions/checkout@v4
         with:
-          # 確保抓取完整歷史，避免部署失敗
           fetch-depth: 0
 
       - name: 設定 Python
@@ -31,29 +30,28 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: 執行爬蟲更新 JSON
-        run: python scraper.py
+        id: run_scraper
+        run: |
+          python scraper.py
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: 提交 JSON 資料更新
+        if: steps.run_scraper.outputs.has_changes == 'true'
         run: |
           git config --global user.name "GitHub Bot"
           git config --global user.email "bot@github.com"
           git add public/data/*.json public/files.json
-          # 如果沒有變動（例如當天沒開獎），就不會報錯退出
-          git commit -m "Auto update lotto data: $(date +'%Y-%m-%d %H:%M')" || echo "No changes to commit"
+          git commit -m "Auto update lotto data: $(date +'%Y-%m-%d %H:%M')"
           git push
 
-      - name: 設定 Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20' # 建議使用目前的穩定版
-
-      - name: 安裝前端套件並打包 (Build)
-        run: |
-          npm install
-          npm run build
-
-      - name: 部署到 GitHub Pages
+      - name: 部署 JSON 到 GitHub Pages (不重新 Build)
+        if: steps.run_scraper.outputs.has_changes == 'true'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist # 你的 Vite 打包目錄
-          branch: gh-pages # 部署到的分支
+          folder: public
+          branch: gh-pages
+          clean: false # 重要：不刪除 gh-pages 上的現有 index.html 和 assets
